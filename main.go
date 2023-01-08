@@ -5,50 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-<<<<<<< HEAD
+
 	"os"
-=======
-	"sync"
 )
 
-type autoInc struct {
-	sync.Mutex
-	id int
+var id = 0
+
+func main() {
+
+	http.HandleFunc("/tweets", createTweet)
+	http.ListenAndServe(":8080", nil)
 }
-
-func (a *autoInc) ID() (id int) {
-	a.Lock()
-	defer a.Unlock()
-
-	id = a.id
-	a.id++
-	return
-}
-
-var ai autoInc
 
 type userPayload struct {
-	ID        int    `json:"id"`
-	Message   string `json:"message"`
-	Location  string `json:"location"`
-	Decode    string `json:"decode"`
-	NextID    int
-	IDCounter int
+	Message  string `json:"message"`
+	Location string `json:"location"`
 }
 
-// type response struct {
+type response struct {
+	ID int `json:"ID"`
+}
 
-// 	Id int `json:"ID"`
-
-// }
-
-//
-
-// func NewPayload() *userPayload{
-// 	return &userPayload{
-// 		ID : ai.ID(),
-// 	  }
-// 	}
+// bilat
 
 func createTweet(w http.ResponseWriter, r *http.Request) {
 	var u userPayload
@@ -67,12 +45,6 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 
-		// u.ID = u.NextID
-		// u.NextID++
-		// u.IDCounter++
-
-		u := &userPayload{ID: 1}
-
 		encoder := json.NewEncoder(os.Stdout)
 		err = encoder.Encode(u)
 		if err != nil {
@@ -81,40 +53,31 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 
 		//return u.ID, nil
 
-		u.ID++
-		if err := encoder.Encode(u); err != nil {
-			log.Fatalf("error encoding user: %v", err)
+		id++
+
+		resp := response{
+			ID: id,
 		}
-		fmt.Println(u.ID)
+
+		if u.Message == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		respJSON, err := json.Marshal(resp)
+		if err != nil {
+			log.Printf("Failed to Marshal: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		//fmt.Println(u.ID)
+
+		w.Write(respJSON)
 
 	}
 
-	}
-
-	fmt.Printf("%+v Tweet: `%s` from %s\n", u.Message, u.Location)
+	fmt.Printf("%+v Tweet: `%s` from %s\n", u.ID, u.Message, u.Location)
 
 	w.WriteHeader(http.StatusOK)
 
-	// u.ID = u.NextID
-	// u.NextID++
-	// u.IDCounter++
-
-	u.ID = ai.ID()
-
-	encoder := json.NewEncoder(w)
-	err = encoder.Encode(u)
-	if err != nil {
-		return
-	}
-
-	//ID : ai.ID(),
-
-	//return u
-	//u.ID, nil
-
-}
-func main() {
-
-	http.HandleFunc("/tweets", createTweet)
-	http.ListenAndServe(":8080", nil)
 }

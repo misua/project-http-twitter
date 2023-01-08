@@ -108,7 +108,6 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//ID : ai.ID(),
-
 	//return u
 	//u.ID, nil
 

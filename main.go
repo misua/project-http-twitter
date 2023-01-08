@@ -80,4 +80,28 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
+<<<<<<< HEAD
+=======
+	// u.ID = u.NextID
+	// u.NextID++
+	// u.IDCounter++
+
+	u.ID = ai.ID()
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(u)
+	if err != nil {
+		return
+	}
+
+	//ID : ai.ID(),
+	//return u
+	//u.ID, nil
+
+}
+func main() {
+
+	http.HandleFunc("/tweets", createTweet)
+	http.ListenAndServe(":8080", nil)
+>>>>>>> fb5ea447475fc7370af17c39d0c896de223796c2
 }

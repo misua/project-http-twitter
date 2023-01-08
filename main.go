@@ -5,8 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+<<<<<<< HEAD
 	"os"
+=======
+	"sync"
+>>>>>>> 354d6eaa7c2f6654b0ea2e5022aaa0487b2add4b
 )
+
+type autoInc struct {
+	sync.Mutex
+	id int
+}
+
+func (a *autoInc) ID() (id int) {
+	a.Lock()
+	defer a.Unlock()
+
+	id = a.id
+	a.id++
+	return
+}
+
+var ai autoInc
 
 type userPayload struct {
 	ID        int    `json:"id"`
@@ -17,6 +37,7 @@ type userPayload struct {
 	IDCounter int
 }
 
+<<<<<<< HEAD
 // type response struct {
 
 // 	Id int `json:"ID"`
@@ -24,6 +45,14 @@ type userPayload struct {
 // }
 
 //
+=======
+// func NewPayload() *userPayload{
+// 	return &userPayload{
+// 		ID : ai.ID(),
+// 	  }
+// 	}
+
+>>>>>>> 354d6eaa7c2f6654b0ea2e5022aaa0487b2add4b
 func createTweet(w http.ResponseWriter, r *http.Request) {
 	var u userPayload
 
@@ -34,6 +63,7 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
+<<<<<<< HEAD
 		// fmt.Println("Tweet:", u.Message)
 		// fmt.Println("Location:", u.Location)
 
@@ -62,6 +92,31 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(u.ID)
 
 	}
+=======
+	}
+
+	fmt.Printf("%+v Tweet: `%s` from %s\n", u.Message, u.Location)
+
+	w.WriteHeader(http.StatusOK)
+
+	// u.ID = u.NextID
+	// u.NextID++
+	// u.IDCounter++
+
+	u.ID = ai.ID()
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(u)
+	if err != nil {
+		return
+	}
+
+	//ID : ai.ID(),
+
+	//return u
+	//u.ID, nil
+
+>>>>>>> 354d6eaa7c2f6654b0ea2e5022aaa0487b2add4b
 }
 func main() {
 

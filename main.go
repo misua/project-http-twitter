@@ -4,7 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 )
+
+type autoInc struct {
+	sync.Mutex
+	id int
+}
+
+func (a *autoInc) ID() (id int) {
+	a.Lock()
+	defer a.Unlock()
+
+	id = a.id
+	a.id++
+	return
+}
+
+var ai autoInc
 
 type userPayload struct {
 	ID        int    `json:"id"`
@@ -15,7 +32,13 @@ type userPayload struct {
 	IDCounter int
 }
 
-func createTweet(w http.ResponseWriter, r *http.Request) (int, error) {
+// func NewPayload() *userPayload{
+// 	return &userPayload{
+// 		ID : ai.ID(),
+// 	  }
+// 	}
+
+func createTweet(w http.ResponseWriter, r *http.Request) {
 	var u userPayload
 
 	defer r.Body.Close()
@@ -24,26 +47,29 @@ func createTweet(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return 0, err
+		return
 	}
-	// fmt.Println("Tweet:", u.Message)
-	// fmt.Println("Location:", u.Location)
 
-	fmt.Printf("Tweet: `%s` from %s\n", u.Message, u.Location)
+	fmt.Printf("%+v Tweet: `%s` from %s\n", u.Message, u.Location)
 
 	w.WriteHeader(http.StatusOK)
 
-	u.ID = u.NextID
-	u.NextID++
-	u.IDCounter++
+	// u.ID = u.NextID
+	// u.NextID++
+	// u.IDCounter++
+
+	u.ID = ai.ID()
 
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(u)
 	if err != nil {
-		return 0, err
+		return
 	}
 
-	return u.ID, nil
+	//ID : ai.ID(),
+
+	//return u
+	//u.ID, nil
 
 }
 

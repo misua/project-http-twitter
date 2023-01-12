@@ -2,31 +2,53 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
 	"log"
 	"net/http"
-
+<<<<<<< HEAD
 	"os"
+=======
+	"sync"
 )
 
-var id = 0
-
-func main() {
-
-	http.HandleFunc("/tweets", createTweet)
-	http.ListenAndServe(":8080", nil)
+type autoInc struct {
+	sync.Mutex
+	id int
 }
+
+func (a *autoInc) ID() (id int) {
+	a.Lock()
+	defer a.Unlock()
+
+	id = a.id
+	a.id++
+	return
+}
+
+var ai autoInc
 
 type userPayload struct {
-	Message  string `json:"message"`
-	Location string `json:"location"`
+	ID        int    `json:"id"`
+	Message   string `json:"message"`
+	Location  string `json:"location"`
+	Decode    string `json:"decode"`
+	NextID    int
+	IDCounter int
 }
 
-type response struct {
-	ID int `json:"ID"`
-}
+// type response struct {
 
-// bilat
+// 	Id int `json:"ID"`
+
+// }
+
+//
+
+// func NewPayload() *userPayload{
+// 	return &userPayload{
+// 		ID : ai.ID(),
+// 	  }
+// 	}
 
 func createTweet(w http.ResponseWriter, r *http.Request) {
 	var u userPayload
@@ -36,7 +58,8 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&u)
 
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		log.Printf("failed to read body: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 		// fmt.Println("Tweet:", u.Message)
 		// fmt.Println("Location:", u.Location)
@@ -45,43 +68,36 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 
+		// u.ID = u.NextID
+		// u.NextID++
+		// u.IDCounter++
+
+		u := &userPayload{ID: 1}
+
 		encoder := json.NewEncoder(os.Stdout)
 		err = encoder.Encode(u)
 		if err != nil {
 			log.Fatal("error encoding user: %v", err)
 		}
 
-		//return u.ID, nil
+	defer r.Body.Close()
 
-		id++
+	tw := tweet{}
 
-		resp := response{
-			ID: id,
+		u.ID++
+		if err := encoder.Encode(u); err != nil {
+			log.Fatalf("error encoding user: %v", err)
 		}
-
-		if u.Message == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		respJSON, err := json.Marshal(resp)
-		if err != nil {
-			log.Printf("Failed to Marshal: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		//fmt.Println(u.ID)
-
-		w.Write(respJSON)
+		fmt.Println(u.ID)
 
 	}
 
-	fmt.Printf("%+v Tweet: `%s` from %s\n", u.ID, u.Message, u.Location)
+	}
+
+	fmt.Printf("%+v Tweet: `%s` from %s\n", u.Message, u.Location)
 
 	w.WriteHeader(http.StatusOK)
 
-<<<<<<< HEAD
-=======
 	// u.ID = u.NextID
 	// u.NextID++
 	// u.IDCounter++
@@ -91,17 +107,16 @@ func createTweet(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(u)
 	if err != nil {
+		log.Printf("Failed to  Marshal: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
-
-	//ID : ai.ID(),
-	//return u
-	//u.ID, nil
+	w.Write(respJSON)
 
 }
 func main() {
 
 	http.HandleFunc("/tweets", createTweet)
 	http.ListenAndServe(":8080", nil)
->>>>>>> fb5ea447475fc7370af17c39d0c896de223796c2
 }
